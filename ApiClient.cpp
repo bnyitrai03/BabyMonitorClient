@@ -1,0 +1,76 @@
+#include "ApiClient.h"
+#include <QNetworkRequest>
+#include <QSslConfiguration>
+#include <QSslCertificate>
+#include <QNetworkReply>
+#include <QSslSocket>
+
+ApiClient* ApiClient::instance()
+{
+    static ApiClient client;
+    return &client;
+}
+
+ApiClient::ApiClient(QObject *parent) : QObject(parent)
+{
+    QString certPem = QStringLiteral(R"(-----BEGIN CERTIFICATE-----
+MIIDizCCAnOgAwIBAgIUOOjR/4PD4xLc2GaRm/VHvSKF+4IwDQYJKoZIhvcNAQEL
+BQAwVTELMAkGA1UEBhMCSFUxETAPBgNVBAgMCEJ1ZGFwZXN0MREwDwYDVQQHDAhC
+dWRhcGVzdDEPMA0GA1UECgwGU1pUQUtJMQ8wDQYDVQQDDAZycGljbTUwHhcNMjUw
+NzE0MDkxMzIwWhcNMzUwNzEyMDkxMzIwWjBVMQswCQYDVQQGEwJIVTERMA8GA1UE
+CAwIQnVkYXBlc3QxETAPBgNVBAcMCEJ1ZGFwZXN0MQ8wDQYDVQQKDAZTWlRBS0kx
+DzANBgNVBAMMBnJwaWNtNTCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEB
+AMVl9a3gAeVihSNmQJsNLzVt3fTdJxo0GfPncVwqmw4V5LKiToGw0c+Pjl9vlODl
+4MBldYPt1/u2xksYmDeVf3CtV/dNnPT4vXMKiHTTC/o903H1vQVazFcgKEUGO6xS
+iy9JlUKpS/+BRr5Zrrj4719P5sqYMHpwcjntAnHGFkXEHXC8ICcAO90muH7IOv/E
+RdcpQijqYTJRES2IzoBsg7yJjN/BeTxio36X1K2Bj1iKLn5lnjA6zBl/+b8vQaVK
+ZEB07DwHrphnAWR+OHCMxjRpVTpHVW51Q8WTZEnCEgaB9QY3DiDW2hgFOFJ8s+Eh
+P6biV/Mu78FjIyESRdLz8OMCAwEAAaNTMFEwHQYDVR0OBBYEFERT6nktB3VJFy05
+uoIkTCQmadYBMB8GA1UdIwQYMBaAFERT6nktB3VJFy05uoIkTCQmadYBMA8GA1Ud
+EwEB/wQFMAMBAf8wDQYJKoZIhvcNAQELBQADggEBAFsk+rRLGlc+8uzRSYd2Y15W
+bOdNMe4ORS3N05lJikHVkfCMVPJ8+k2exO5ml2+f71wXVOFuLNkzlHLv4FYjYCNT
+JNTr7tpyHzdHlCpEt9vBxkvoU9fvi8D45LwTiPgst6X/TnH6Jwyf1Q2uTTjSYAnn
+v8KL/+CCbseYLR+LM/XtUO6OnfLsnNUJhyKlIDPfUw35CVMFMk/JMU7l+eB3ttKM
+O/5CFJB4vIm2NGwymG00MqyAB+tBZ+AEpKAvRlbtdWEnb2T9ubbdH5qNfzW000tI
+DD8wKqKbK+h28a1h0AwK1xb/Vf7rIirKz0Y7MuMdCEVuaGzeKoSN3DvPd1WcEsM=
+-----END CERTIFICATE-----)");
+
+    QSslCertificate cert(certPem.toUtf8(), QSsl::Pem);
+    m_sslConfig = QSslConfiguration::defaultConfiguration();
+    QList<QSslCertificate> caCerts = m_sslConfig.caCertificates();
+    caCerts.append(cert);
+    m_sslConfig.setCaCertificates(caCerts);
+
+    connect(&m_networkManager, &QNetworkAccessManager::sslErrors,
+            [](QNetworkReply* reply, const QList<QSslError>& errors) {
+                qWarning() << "SSL Errors:";
+                for (const auto& e : errors)
+                    qWarning() << " -" << e.errorString();
+                // reply->ignoreSslErrors();
+            });
+}
+
+QNetworkReply* ApiClient::get(const QString& endpoint)
+{
+    QNetworkRequest request(QUrl(m_baseUrl + endpoint));
+    request.setSslConfiguration(m_sslConfig);
+    request.setAttribute(QNetworkRequest::Http2AllowedAttribute, false); // Force HTTP/1.1
+    request.setRawHeader("Connection", "keep-alive");
+    return m_networkManager.get(request);
+}
+
+QNetworkReply* ApiClient::patch(const QString& endpoint, const QByteArray& data)
+{
+    QNetworkRequest request(QUrl(m_baseUrl + endpoint));
+    request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
+    request.setSslConfiguration(m_sslConfig);
+    return m_networkManager.put(request, data);
+}
+
+QNetworkReply* ApiClient::post(const QString& endpoint, const QByteArray& data)
+{
+    QNetworkRequest request(QUrl(m_baseUrl + endpoint));
+    request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
+    request.setSslConfiguration(m_sslConfig);
+    return m_networkManager.post(request, data);
+}
