@@ -27,10 +27,15 @@ void SensorController::refreshData()
 
 void SensorController::updateLuxThreshold(int threshold)
 {
-    QNetworkReply* reply = ApiClient::instance()->patch("/sensors/lux_threshold", QByteArray::number(threshold));
+    QJsonObject jsonObj;
+    jsonObj["threshold"] = threshold;
+    QJsonDocument jsonDoc(jsonObj);
+    QByteArray jsonData = jsonDoc.toJson(QJsonDocument::Compact);
+
+    QNetworkReply* reply = ApiClient::instance()->put("/sensors/lux_threshold", jsonData);
     connect(reply, &QNetworkReply::finished, this, [this, reply]() {
         if (reply->error() == QNetworkReply::NoError) {
-            refreshData(); // Refresh data to show new threshold
+            refreshData();
         } else {
             m_online = false;
             emit sensorDataChanged();
@@ -43,7 +48,7 @@ void SensorController::parseSensorData(const QByteArray &data)
 {
     QJsonDocument doc = QJsonDocument::fromJson(data);
     if (!doc.isObject()){
-        setDummyDataOnError();
+        m_online = false;
     }
     else {
         QJsonObject obj = doc.object();
@@ -55,15 +60,6 @@ void SensorController::parseSensorData(const QByteArray &data)
     }
 
     emit sensorDataChanged();
-}
-
-void SensorController::setDummyDataOnError()
-{
-    m_luxValue = 0;
-    m_tempValue = 0;
-    m_luxThreshold = -1;
-    m_timestamp = "N/A";
-    m_online = false;
 }
 
 double SensorController::get_luxValue() const { return m_luxValue; }

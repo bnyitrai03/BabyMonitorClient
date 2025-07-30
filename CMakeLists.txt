@@ -19,17 +19,20 @@ qt_add_qml_module(BabyMonitorUI
         MainView.qml
         SensorView.qml
         CameraStreamView.qml
+        CameraSettingsMenu.qml
+        CustomSlider.qml
     SOURCES
         ApiClient.h
         ApiClient.cpp
         SensorController.h
         SensorController.cpp
-        CameraStreamController.h
-        CameraStreamController.cpp
+        StreamController.h
+        StreamController.cpp
+        CameraController.h
+        CameraController.cpp
         Camera.h
         Camera.cpp
-    RESOURCES
-        rpicm5.crt
+        Config.h
 )
 
 target_link_libraries(BabyMonitorUI

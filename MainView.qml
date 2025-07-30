@@ -30,7 +30,9 @@ ApplicationWindow {
         anchors.bottom: parent.bottom
         Item {
             id: streamTab
-
+            CameraStreamView{
+                anchors.fill: parent
+            }
         }
 
         Item {

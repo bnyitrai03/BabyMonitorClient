@@ -16,7 +16,7 @@ Item {
             ColumnLayout {
                 id: columnLayout
                 anchors.centerIn: parent
-                width: Math.min(500, parent.width * 0.9) // Limit max width and add responsive sizing
+                width: Math.min(500, parent.width * 0.9)
                 spacing: 30
 
                 // --- HEADER WITH ONLINE INDICATOR ---
@@ -51,18 +51,18 @@ Item {
                     columnSpacing: 20
                     rowSpacing: 10
 
-                    Label { text: "🌡️Temperature:"; font.bold: true; font.pixelSize: 16 }
-                    Label { text: "💡Light Level:"; font.bold: true; font.pixelSize: 16 }
+                    Label { text: "️Temperature:"; font.bold: true; font.pixelSize: 16 }
+                    Label { text: "Light Level:"; font.bold: true; font.pixelSize: 16 }
 
                     Label {
                         font.pixelSize: 16
-                        text: sensorController.online ? sensorController.tempValue.toFixed(1) + " °C" : "---"
+                        text: sensorController.online ? "♨️ " + sensorController.tempValue.toFixed(1) + " °C" : "---"
                         color: sensorController.online ? "#34495e" : "gray"
                     }
 
                     Label {
                         font.pixelSize: 16
-                        text: sensorController.online ? sensorController.luxValue.toFixed(0) + " lux" : "---"
+                        text: sensorController.online ? "💡 " + sensorController.luxValue.toFixed(0) + " lux" : "---"
                         color: sensorController.online ? "#34495e" : "gray"
                     }
                 }
@@ -83,24 +83,79 @@ Item {
                         anchors.margins: 20
                         spacing: 15
 
-                        // Threshold display
+                        // Editable threshold input
                         RowLayout {
                             Layout.alignment: Qt.AlignHCenter
                             spacing: 10
 
                             Label {
-                                text: "Lux Threshold:"
+                                text: "Light Threshold:"
                                 font.bold: true
                                 font.pixelSize: 16
                                 color: "#34495e"
                             }
 
-                            Label {
-                                text: sensorController.online && sensorController.luxThreshold >= 0 ?
-                                      sensorController.luxThreshold + " lux" : "---"
-                                font.pixelSize: 16
-                                color: sensorController.online ? "#2c3e50" : "gray"
-                                font.bold: true
+                            Rectangle {
+                                width: 100
+                                height: 30
+                                color: sensorController.online ? "white" : "#f0f0f0"
+                                border.color: thresholdInput.activeFocus ? "#3498db" : "#bdc3c7"
+                                border.width: 2
+                                radius: 4
+
+                                TextInput {
+                                    id: thresholdInput
+                                    anchors.fill: parent
+                                    anchors.margins: 5
+                                    text: sensorController.online && sensorController.luxThreshold > 0 ?
+                                          sensorController.luxThreshold.toString() : "---"
+                                    font.pixelSize: 14
+                                    color: sensorController.online ? "#2c3e50" : "gray"
+                                    enabled: sensorController.online
+                                    horizontalAlignment: Text.AlignHCenter
+                                    verticalAlignment: Text.AlignVCenter
+                                    validator: IntValidator { bottom: 0; top: 99999 }
+                                    selectByMouse: true
+
+                                    // Update the input when the controller value changes
+                                    Connections {
+                                        target: sensorController
+                                        function onSensorDataChanged() {
+                                            if (!thresholdInput.activeFocus && sensorController.online && sensorController.luxThreshold > 0) {
+                                                thresholdInput.text = sensorController.luxThreshold.toString()
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            // Update button
+                            Button {
+                                text: "Set"
+                                enabled: sensorController.online && thresholdInput.text.length > 0
+                                font.pixelSize: 12
+                                background: Rectangle {
+                                    color: parent.enabled ? (parent.pressed ? "#2980b9" : "#3498db") : "#bdc3c7"
+                                    radius: 4
+                                    border.color: Qt.darker(color, 1.2)
+                                    border.width: 1
+                                }
+                                contentItem: Text {
+                                    text: parent.text
+                                    color: parent.enabled ? "white" : "gray"
+                                    horizontalAlignment: Text.AlignHCenter
+                                    verticalAlignment: Text.AlignVCenter
+                                    font: parent.font
+                                }
+
+                                onClicked: {
+                                    if (thresholdInput.text.length > 0) {
+                                        var newThreshold = parseInt(thresholdInput.text)
+                                        if (!isNaN(newThreshold) && newThreshold > 0) {
+                                            sensorController.updateLuxThreshold(newThreshold)
+                                        }
+                                    }
+                                }
                             }
                         }
 

@@ -33,7 +33,6 @@ signals:
 
 private:
     void parseSensorData(const QByteArray& data);
-    void setDummyDataOnError();
 
     double m_luxValue = 0.0;
     double m_tempValue = 0.0;

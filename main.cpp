@@ -3,25 +3,31 @@
 #include <QQmlContext>
 
 #include "SensorController.h"
-#include "CameraStreamController.h"
+#include "StreamController.h"
+#include "CameraController.h"
 #include "Camera.h"
+#include "ApiClient.h"
 
 int main(int argc, char *argv[])
 {
     QGuiApplication app(argc, argv);
     QQmlApplicationEngine engine;
 
-    // Register C++ data models with the QML type system
-    //qmlRegisterType<Camera>("BabyMonitor.Models", 1, 0, "Camera");
+    // Register C++ data model with the QML type system
+    qmlRegisterType<Camera>("BabyMonitor.Models", 1, 0, "Camera");
 
     // Instantiate controllers
     SensorController sensorController;
-    //CameraStreamController camerastreamController;
+    StreamController streamController;
+    CameraController cameraController;
 
     // Expose C++ controller instances to QML
     QQmlContext *rootContext = engine.rootContext();
     rootContext->setContextProperty("sensorController", &sensorController);
-    //rootContext->setContextProperty("camerastreamController", &camerastreamController);
+    rootContext->setContextProperty("streamController", &streamController);
+    rootContext->setContextProperty("cameraController", &cameraController);
+    rootContext->setContextProperty("ApiClient", ApiClient::instance());
+
 
     QObject::connect(
         &engine,
