@@ -10,12 +10,16 @@ class CameraController : public QObject
 {
     Q_OBJECT
     Q_PROPERTY(QQmlListProperty<Camera> cameras READ cameras NOTIFY camerasChanged)
+    Q_PROPERTY(Camera* activeCamera READ activeCamera WRITE setActiveCamera NOTIFY activeCameraChanged)
 
 public:
     explicit CameraController(QObject *parent = nullptr);
 
     QQmlListProperty<Camera> cameras();
+    Camera* activeCamera() const { return m_activeCamera; }
 
+    Q_INVOKABLE void setActiveCamera(Camera* camera);
+    Q_INVOKABLE void refreshCameras();
     Q_INVOKABLE void updateCameraControls(const QString& cameraId, const QVariantMap& controls);
     Q_INVOKABLE void resetCameraControls(const QString& cameraId);
 
@@ -23,11 +27,9 @@ public:
     Q_INVOKABLE QStringList getFormatsForCamera(const QString& cameraId);
     Q_INVOKABLE QStringList getResolutionsForFormat(const QString& cameraId, const QString& format);
     Q_INVOKABLE QList<int> getFpsForResolution(const QString& cameraId, const QString& format, const QString& resolution);
-
-public slots:
-    void refreshCameras();
 signals:
     void camerasChanged();
+    void activeCameraChanged();
     void error(const QString& message);
 
 private slots:
@@ -43,6 +45,7 @@ private:
     static Camera* camerasAt(QQmlListProperty<Camera>* list, qsizetype index);
 
     QList<Camera*> m_cameras;
+    Camera* m_activeCamera = nullptr;
 };
 
 #endif // CAMERACONTROLLER_H

@@ -13,8 +13,6 @@ Rectangle {
                                   formatComboBox.currentIndex > -1 &&
                                   resolutionComboBox.currentIndex > -1 &&
                                   fpsComboBox.currentIndex > -1
-    property var currentCamera: null
-
 
     // --- Main Layout ---
     RowLayout {
@@ -92,43 +90,75 @@ Rectangle {
                             model: cameraController.cameras
                             textRole: "id"
                             valueRole: "id"
+                            currentIndex: -1
                             displayText: currentIndex > -1 ? currentText : "Select a camera..."
                             onCurrentIndexChanged: {
-                                if (currentIndex > -1){
-                                    currentCamera = cameraController.cameras[currentIndex]
-                                    console.log("Updated currentCam")
+                                if(currentIndex > -1){
+                                    cameraController.refreshCameras()
+                                    cameraController.setActiveCamera(cameraController.cameras[currentIndex])
+                                    console.log("Updated activeCamera to:", cameraController.activeCamera.id)
                                 }
                             }
                         }
 
-                        Label { text: "CurrentCamera" }
-                        Label { text: currentCamera.id }
-
-                        Label { text: "Brightness: " }
-                        CustomSlider {
-                            id: brigtnessSlider
-                            from: -64
-                            value: currentCamera ? currentCamera.controls.brightness : 0
-                            to: 64
+                        Label { text: "Current Camera:" }
+                        Label {
+                            text: cameraController.activeCamera !== null ? cameraController.activeCamera.id : "None selected"
+                            font.italic: cameraController.activeCamera == null
                         }
 
-                        Label { text: "White Balance Enable:" }
+                        Label { text: "Brightness:" }
+                        CustomSlider {
+                            id: brightnessSlider
+                            from: cameraController.activeCamera.controls.brightness.min
+                            to: cameraController.activeCamera.controls.brightness.max
+                            value: cameraController.activeCamera.controls.brightness.value
+                            onValueChanged: {
+                                if (cameraController.activeCamera !== null) {
+                                    console.log("Updated brightness to:", value)
+                                    //cameraController.updateCameraControls(cameraController.activeCamera.id, controls);
+                                }
+                            }
+                        }
+
+                        Label { text: "White Balance Manual:" }
                         Switch {
-                            id: enableSwitch
-                            checked: true
-                            opacity: control.enabled ? 1.0 : 0.4
+                            id: manualSwitch
+                            checked:  cameraController.activeCamera !== null ? !cameraController.activeCamera.controls.white_balance_automatic.value : false
+
+                            onCheckedChanged: {
+                                if (cameraController.activeCamera !== null) {
+                                    console.log("Updated White Balance Enable: to:", checked)
+                                }
+                            }
                         }
 
                         Label {
-                            text: "White Balance: "
+                            text: "White Balance:"
                             opacity: whitebalanceSlider.enabled ? 1.0 : 0.5
                         }
                         CustomSlider {
                             id: whitebalanceSlider
-                            from: 2800
-                            value: 4600
-                            to: 6500
-                            enabled: enableSwitch.checked
+                            from: cameraController.activeCamera.controls.white_balance_temperature.min
+                            to: cameraController.activeCamera.controls.white_balance_temperature.max
+                            value: cameraController.activeCamera.controls.white_balance_temperature.value
+                            enabled: manualSwitch.checked
+
+                            onValueChanged: {
+                                if (cameraController.activeCamera !== null) {
+                                    console.log("Updated White Balance Enable to:", value)
+                                }
+                            }
+                        }
+
+                        Button {
+                            text: "Reset Controls"
+                            enabled: cameraController.activeCamera !== null
+                            onClicked: {
+                                if (cameraController.activeCamera !== null) {
+                                    cameraController.resetCameraControls(cameraController.activeCamera.id);
+                                }
+                            }
                         }
                     }
 
@@ -159,33 +189,46 @@ Rectangle {
 
                         Label { text: "Camera:" }
                         Label {
-                            text: cameraComboBox.valid ? cameraComboBox.currentText : "No camera selected"
+                            text: cameraComboBox.currentIndex > -1 ? cameraComboBox.currentText : "No camera selected"
                             Layout.fillWidth: true
                             elide: Text.ElideRight
-                            font.italic: !cameraComboBox.valid
+                            font.italic: cameraComboBox.currentIndex === -1
                         }
 
                         // Format, Resolution, FPS selectors
                         Label { text: "Format:" }
                         ComboBox {
                             id: formatComboBox
-                            Layout.fillWidth: true; enabled: cameraComboBox.currentIndex > -1 && !StreamController.streaming
-                            onCurrentTextChanged: {
-                                resolutionComboBox.model = []; fpsComboBox.model = [];
-                                if (currentText) resolutionComboBox.model = CameraController.getResolutionsForFormat(cameraComboBox.currentValue, currentText)
-                            }
+                            Layout.fillWidth: true
+
+                            //enabled: cameraComboBox.currentIndex > -1 && !StreamController.streaming
+                            //model: cameraComboBox.currentIndex > -1 ? CameraController.getFormatsForCamera(cameraComboBox.currentValue) : []
+                            //onCurrentTextChanged: {
+                                // resolutionComboBox.model = [];
+                                // fpsComboBox.model = [];
+                                // if (currentText && cameraComboBox.currentIndex > -1) {
+                                //     resolutionComboBox.model = CameraController.getResolutionsForFormat(cameraComboBox.currentValue, currentText);
+                                // }
+                            //}
                         }
                         Label { text: "Resolution:" }
                         ComboBox {
                             id: resolutionComboBox
-                            Layout.fillWidth: true; enabled: formatComboBox.currentIndex > -1 && !StreamController.streaming
-                            onCurrentTextChanged: {
-                                fpsComboBox.model = [];
-                                if (currentText) fpsComboBox.model = CameraController.getFpsForResolution(cameraComboBox.currentValue, formatComboBox.currentText, currentText)
-                            }
+                            Layout.fillWidth: true
+                            // enabled: formatComboBox.currentIndex > -1 && !StreamController.streaming
+                            // onCurrentTextChanged: {
+                            //     fpsComboBox.model = [];
+                            //     if (currentText && formatComboBox.currentText && cameraComboBox.currentIndex > -1) {
+                            //         fpsComboBox.model = CameraController.getFpsForResolution(cameraComboBox.currentValue, formatComboBox.currentText, currentText);
+                            //     }
+                            // }
                         }
                         Label { text: "FPS:" }
-                        ComboBox { id: fpsComboBox; Layout.fillWidth: true; enabled: resolutionComboBox.currentIndex > -1 && !StreamController.streaming }
+                        ComboBox {
+                            id: fpsComboBox
+                            Layout.fillWidth: true
+                            //enabled: resolutionComboBox.currentIndex > -1 && !StreamController.streaming
+                        }
                     }
 
                     // --- Action Buttons ---
@@ -196,17 +239,23 @@ Rectangle {
 
                         Button {
                             text: "Start Stream"
-                            enabled: isReadyToStream && !StreamController.streaming
-                            onClicked: {
-                                const resolutionParts = resolutionComboBox.currentText.split('x');
-                                StreamController.startStream(cameraComboBox.currentValue, currentCamera.id, parseInt(fpsComboBox.currentText), parseInt(resolutionParts[0]), parseInt(resolutionParts[1]));
-                            }
+                            // enabled: isReadyToStream && !StreamController.streaming
+                            // onClicked: {
+                            //     const resolutionParts = resolutionComboBox.currentText.split('x');
+                            //     StreamController.startStream(
+                            //         cameraComboBox.currentValue,
+                            //         cameraController.activeCamera.id,
+                            //         parseInt(fpsComboBox.currentText),
+                            //         parseInt(resolutionParts[0]),
+                            //         parseInt(resolutionParts[1])
+                            //     );
+                            // }
                         }
 
                         Button {
                             text: "Stop Stream"
-                            enabled: StreamController.streaming
-                            onClicked: StreamController.stopStream()
+                            // enabled: StreamController.streaming
+                            // onClicked: StreamController.stopStream()
                         }
                     }
                 }
@@ -219,18 +268,46 @@ Rectangle {
             Layout.fillHeight: true
             StackLayout {
                 anchors.fill: parent
-                currentIndex: StreamController.streaming && StreamController.streamUrl.toString() !== "" ? 1 : 0
+                //currentIndex: StreamController.streaming && StreamController.streamUrl.toString() !== "" ? 1 : 0
                 Rectangle {
                     color: "black"
-                    Label { anchors.centerIn: parent; color: "white"; text: StreamController.streaming ? "Connecting..." : "Stream not active."; horizontalAlignment: Text.AlignHCenter }
+                    Label {
+                        anchors.centerIn: parent
+                        color: "white"
+                        //text: StreamController.streaming ? "Connecting..." : "Stream not active."
+                        horizontalAlignment: Text.AlignHCenter
+                    }
                 }
-                Video { id: videoPlayer; source: StreamController.streamUrl; autoPlay: true; fillMode: VideoOutput.PreserveAspectFit }
+                Video {
+                    id: videoPlayer
+                    //source: StreamController.streamUrl
+                    autoPlay: true
+                    fillMode: VideoOutput.PreserveAspectFit
+                }
             }
         }
     }
 
     // --- Global Error Handling ---
-    Connections { target: CameraController; function onError(message) { errorDialog.text = "Camera Error: " + message; errorDialog.open() } }
-    Connections { target: StreamController; function onError(message) { errorDialog.text = "Stream Error: " + message; errorDialog.open() } }
-    Dialog { id: errorDialog; title: "Error"; standardButtons: Dialog.Ok; modal: true; Text { text: parent.text } }
+    Connections {
+        target: cameraController
+        function onError(message) {
+            errorDialog.text = "Camera Error: " + message
+            errorDialog.open()
+        }
+    }
+    // Connections {
+    //     target: StreamController
+    //     function onError(message) {
+    //         errorDialog.text = "Stream Error: " + message
+    //         errorDialog.open()
+    //     }
+    // }
+    Dialog {
+        id: errorDialog
+        title: "Error"
+        standardButtons: Dialog.Ok
+        modal: true
+        Text { text: parent.text }
+    }
 }

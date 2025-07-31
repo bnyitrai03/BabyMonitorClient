@@ -15,6 +15,15 @@ QQmlListProperty<Camera> CameraController::cameras()
     return QQmlListProperty<Camera>(this, &m_cameras, &camerasCount, &camerasAt);
 }
 
+void CameraController::setActiveCamera(Camera* camera)
+{
+    if (m_activeCamera != camera) {
+        m_activeCamera = camera;
+        emit activeCameraChanged();
+        qInfo() << camera->id() << "has been set";
+    }
+}
+
 void CameraController::refreshCameras()
 {
     QNetworkReply* reply = ApiClient::instance()->get("/cameras");
@@ -96,6 +105,7 @@ void CameraController::parseCamerasData(const QByteArray& data)
 
     qDeleteAll(m_cameras);
     m_cameras.clear();
+    setActiveCamera(nullptr);
 
     QJsonArray camerasArray = doc.array();
     for (const QJsonValue& value : std::as_const(camerasArray)) {
