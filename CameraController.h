@@ -20,7 +20,7 @@ public:
 
     Q_INVOKABLE void setActiveCamera(Camera* camera);
     Q_INVOKABLE void refreshCameras();
-    Q_INVOKABLE void updateCameraControls(const QString& cameraId, const QVariantMap& controls);
+    Q_INVOKABLE void updateCameraControl(const QString& cameraId, const QString& controlName, const QVariant& value);
     Q_INVOKABLE void resetCameraControls(const QString& cameraId);
 
     // Helper functions for QML, moved from the old controller

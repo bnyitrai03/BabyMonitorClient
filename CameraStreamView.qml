@@ -1,4 +1,3 @@
-// CameraStreamView.qml
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
@@ -94,17 +93,10 @@ Rectangle {
                             displayText: currentIndex > -1 ? currentText : "Select a camera..."
                             onCurrentIndexChanged: {
                                 if(currentIndex > -1){
-                                    cameraController.refreshCameras()
                                     cameraController.setActiveCamera(cameraController.cameras[currentIndex])
                                     console.log("Updated activeCamera to:", cameraController.activeCamera.id)
                                 }
                             }
-                        }
-
-                        Label { text: "Current Camera:" }
-                        Label {
-                            text: cameraController.activeCamera !== null ? cameraController.activeCamera.id : "None selected"
-                            font.italic: cameraController.activeCamera == null
                         }
 
                         Label { text: "Brightness:" }
@@ -113,30 +105,168 @@ Rectangle {
                             from: cameraController.activeCamera.controls.brightness.min
                             to: cameraController.activeCamera.controls.brightness.max
                             value: cameraController.activeCamera.controls.brightness.value
-                            onValueChanged: {
-                                if (cameraController.activeCamera !== null) {
+
+                            onPressedChanged: {
+                                if (!pressed && cameraController.activeCamera !== null) {
                                     console.log("Updated brightness to:", value)
-                                    //cameraController.updateCameraControls(cameraController.activeCamera.id, controls);
+                                    cameraController.updateCameraControl(
+                                        cameraController.activeCamera.id,
+                                        "brightness",
+                                        value
+                                    )
                                 }
                             }
                         }
 
-                        Label { text: "White Balance Manual:" }
+                        Label { text: "Backlight Compensation:" }
+                        CustomSlider {
+                            id: backlightSlider
+                            from: cameraController.activeCamera.controls.backlight_compensation.min
+                            to: cameraController.activeCamera.controls.backlight_compensation.max
+                            value: cameraController.activeCamera.controls.backlight_compensation.value
+
+                            onPressedChanged: {
+                                if (!pressed && cameraController.activeCamera !== null) {
+                                    console.log("Updated Backlight Compensation to:", value)
+                                    cameraController.updateCameraControl(
+                                        cameraController.activeCamera.id,
+                                        "backlight_compensation",
+                                        value
+                                    )
+                                }
+                            }
+                        }
+
+                        Label { text: "Contrast:" }
+                        CustomSlider {
+                            id: contrastSlider
+                            from: cameraController.activeCamera.controls.contrast.min
+                            to: cameraController.activeCamera.controls.contrast.max
+                            value: cameraController.activeCamera.controls.contrast.value
+
+                            onPressedChanged: {
+                                if (!pressed && cameraController.activeCamera !== null) {
+                                    console.log("Updated Contrast to:", value)
+                                    cameraController.updateCameraControl(
+                                        cameraController.activeCamera.id,
+                                        "contrast",
+                                        value
+                                    )
+                                }
+                            }
+                        }
+
+                        Label { text: "Gain:" }
+                        CustomSlider {
+                            id: gainSlider
+                            from: cameraController.activeCamera.controls.gain.min
+                            to: cameraController.activeCamera.controls.gain.max
+                            value: cameraController.activeCamera.controls.gain.value
+
+                            onPressedChanged: {
+                                if (!pressed && cameraController.activeCamera !== null) {
+                                    console.log("Updated brightness to:", value)
+                                    cameraController.updateCameraControl(
+                                        cameraController.activeCamera.id,
+                                        "gain",
+                                        value
+                                    )
+                                }
+                            }
+                        }
+
+                        Label { text: "Saturation:" }
+                        CustomSlider {
+                            id: saturationSlider
+                            from: cameraController.activeCamera.controls.saturation.min
+                            to: cameraController.activeCamera.controls.saturation.max
+                            value: cameraController.activeCamera.controls.saturation.value
+
+                            onPressedChanged: {
+                                if (!pressed && cameraController.activeCamera !== null) {
+                                    console.log("Updated Saturation to:", value)
+                                    cameraController.updateCameraControl(
+                                        cameraController.activeCamera.id,
+                                        "saturation",
+                                        value
+                                    )
+                                }
+                            }
+                        }
+
+                        Label { text: "Sharpness:" }
+                        CustomSlider {
+                            id: sharpnessSlider
+                            from: cameraController.activeCamera.controls.sharpness.min
+                            to: cameraController.activeCamera.controls.sharpness.max
+                            value: cameraController.activeCamera.controls.sharpness.value
+
+                            onPressedChanged: {
+                                if (!pressed && cameraController.activeCamera !== null) {
+                                    console.log("Updated Sharpness to:", value)
+                                    cameraController.updateCameraControl(
+                                        cameraController.activeCamera.id,
+                                        "sharpness",
+                                        value
+                                    )
+                                }
+                            }
+                        }
+
+                        Label { text: "Manual Exposure:" }
+                        Switch {
+                            id: exposureSwitch
+                            checked: (cameraController.activeCamera !== null) && (cameraController.activeCamera.controls.auto_exposure.value === 1) ? true : false
+                            onCheckedChanged: {
+                                if (cameraController.activeCamera !== null) {
+                                    console.log("Updated Manual Exposure to:", checked)
+                                    var value = checked ? 1 : 3
+                                    cameraController.updateCameraControl(
+                                        cameraController.activeCamera.id,
+                                        "auto_exposure",
+                                        value
+                                    )
+                                }
+                            }
+                        }
+
+                        Label { text: "Exposure:" }
+                        CustomSlider {
+                            id: exposureSlider
+                            from: cameraController.activeCamera.controls.exposure_time_absolute.min
+                            to: cameraController.activeCamera.controls.exposure_time_absolute.max
+                            value: cameraController.activeCamera.controls.exposure_time_absolute.value
+                            enabled: exposureSwitch.checked
+
+                            onPressedChanged: {
+                                if (!pressed && cameraController.activeCamera !== null) {
+                                    console.log("Updated Sharpness to:", value)
+                                    cameraController.updateCameraControl(
+                                        cameraController.activeCamera.id,
+                                        "exposure_time_absolute",
+                                        value
+                                    )
+                                }
+                            }
+                        }
+
+                        Label { text: "Manual White Balance:" }
                         Switch {
                             id: manualSwitch
                             checked:  cameraController.activeCamera !== null ? !cameraController.activeCamera.controls.white_balance_automatic.value : false
-
                             onCheckedChanged: {
                                 if (cameraController.activeCamera !== null) {
-                                    console.log("Updated White Balance Enable: to:", checked)
+                                    console.log("Updated White Balance Enable to:", checked)
+                                    cameraController.updateCameraControl(
+                                        cameraController.activeCamera.id,
+                                        "white_balance_automatic",
+                                        !checked
+                                    )
                                 }
                             }
                         }
 
-                        Label {
-                            text: "White Balance:"
-                            opacity: whitebalanceSlider.enabled ? 1.0 : 0.5
-                        }
+                        Label { text: "White Balance:" }
                         CustomSlider {
                             id: whitebalanceSlider
                             from: cameraController.activeCamera.controls.white_balance_temperature.min
@@ -144,14 +274,53 @@ Rectangle {
                             value: cameraController.activeCamera.controls.white_balance_temperature.value
                             enabled: manualSwitch.checked
 
-                            onValueChanged: {
-                                if (cameraController.activeCamera !== null) {
-                                    console.log("Updated White Balance Enable to:", value)
+                            onPressedChanged: {
+                                if (!pressed && cameraController.activeCamera !== null) {
+                                    console.log("Updated White Balance to:", value)
+                                    cameraController.updateCameraControl(
+                                        cameraController.activeCamera.id,
+                                        "white_balance_temperature",
+                                        value
+                                    )
                                 }
                             }
                         }
 
+                        Label { text: "Power Line Frequency" }
+                        ComboBox {
+                            id: powerlineComboBox
+                            Layout.fillWidth: true
+                            model:
+                            [
+                                { value: 0, text: qsTr("Disabled") },
+                                { value: 1, text: qsTr("50 Hz") },
+                                { value: 2, text: qsTr("60 Hz") }
+                            ]
+                            textRole: "text"
+
+                            currentIndex: {
+                                if (cameraController.activeCamera)
+                                    return cameraController.activeCamera.controls.power_line_frequency.value;
+                                else
+                                    return -1;
+                            }
+
+                            onCurrentIndexChanged: {
+                                if (cameraController.activeCamera !== null && currentIndex > -1) {
+                                    console.log("Updated power line frequency to:", currentIndex)
+                                    cameraController.updateCameraControl(
+                                        cameraController.activeCamera.id,
+                                        "power_line_frequency",
+                                        currentIndex
+                                    )
+                                }
+                            }
+                        }
+
+                        Item {} // Left empty cell
                         Button {
+                            Layout.alignment: Qt.AlignLeft
+                            Layout.topMargin: 10
                             text: "Reset Controls"
                             enabled: cameraController.activeCamera !== null
                             onClicked: {
@@ -171,8 +340,6 @@ Rectangle {
                         Layout.fillWidth: true
                         height: 1
                         color: "#cccccc"
-                        Layout.topMargin: 10
-                        Layout.bottomMargin: 10
                     }
 
                     // --- Bottom Half: Stream Settings and Actions ---
@@ -187,7 +354,7 @@ Rectangle {
                         columnSpacing: 10
                         rowSpacing: 5
 
-                        Label { text: "Camera:" }
+                        Label { text: "Camera eye:" }
                         Label {
                             text: cameraComboBox.currentIndex > -1 ? cameraComboBox.currentText : "No camera selected"
                             Layout.fillWidth: true
@@ -195,22 +362,6 @@ Rectangle {
                             font.italic: cameraComboBox.currentIndex === -1
                         }
 
-                        // Format, Resolution, FPS selectors
-                        Label { text: "Format:" }
-                        ComboBox {
-                            id: formatComboBox
-                            Layout.fillWidth: true
-
-                            //enabled: cameraComboBox.currentIndex > -1 && !StreamController.streaming
-                            //model: cameraComboBox.currentIndex > -1 ? CameraController.getFormatsForCamera(cameraComboBox.currentValue) : []
-                            //onCurrentTextChanged: {
-                                // resolutionComboBox.model = [];
-                                // fpsComboBox.model = [];
-                                // if (currentText && cameraComboBox.currentIndex > -1) {
-                                //     resolutionComboBox.model = CameraController.getResolutionsForFormat(cameraComboBox.currentValue, currentText);
-                                // }
-                            //}
-                        }
                         Label { text: "Resolution:" }
                         ComboBox {
                             id: resolutionComboBox

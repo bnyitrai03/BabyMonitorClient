@@ -20,7 +20,6 @@ void CameraController::setActiveCamera(Camera* camera)
     if (m_activeCamera != camera) {
         m_activeCamera = camera;
         emit activeCameraChanged();
-        qInfo() << camera->id() << "has been set";
     }
 }
 
@@ -30,22 +29,19 @@ void CameraController::refreshCameras()
     connect(reply, &QNetworkReply::finished, this, &CameraController::onCamerasReceived);
 }
 
-void CameraController::updateCameraControls(const QString& cameraId, const QVariantMap& controls)
+void CameraController::updateCameraControl(const QString& cameraId, const QString& controlName, const QVariant& value)
 {
-    QJsonObject requestData;
     QJsonObject controlsObj;
+    controlsObj[controlName] = QJsonValue::fromVariant(value);
 
-    for (auto it = controls.begin(); it != controls.end(); ++it) {
-        controlsObj[it.key()] = QJsonValue::fromVariant(it.value());
-    }
+    QJsonObject requestData;
+    requestData["cam_id"] = cameraId;
     requestData["controls"] = controlsObj;
-
     QJsonDocument doc(requestData);
     QByteArray data = doc.toJson();
 
     QString endpoint = "/cameras/" + cameraId + "/controls";
     QNetworkReply* reply = ApiClient::instance()->put(endpoint, data);
-    // Let's assume the API returns the updated camera object on success
     connect(reply, &QNetworkReply::finished, this, &CameraController::onControlsUpdated);
 }
 
@@ -53,7 +49,6 @@ void CameraController::resetCameraControls(const QString& cameraId)
 {
     QString endpoint = "/cameras/" + cameraId + "/reset";
     QNetworkReply* reply = ApiClient::instance()->put(endpoint, QByteArray());
-    // Also connect to the same slot to handle the response
     connect(reply, &QNetworkReply::finished, this, &CameraController::onControlsUpdated);
 }
 
@@ -76,17 +71,20 @@ void CameraController::onCamerasReceived()
 void CameraController::onControlsUpdated()
 {
     QNetworkReply* reply = qobject_cast<QNetworkReply*>(sender());
-    if (!reply) return;
+    if (!reply){
+        emit error("Invalid camera controls reply!");
+        return;
+    }
 
     if (reply->error() == QNetworkReply::NoError) {
-        // Assuming the API returns the full updated camera JSON object in the body
         QJsonDocument doc = QJsonDocument::fromJson(reply->readAll());
         if (doc.isObject()) {
             QJsonObject cameraData = doc.object();
-            QString cameraId = cameraData["id"].toString();
+            QString cameraId = cameraData["cam_id"].toString();
             Camera* camera = findCameraById(cameraId);
             if (camera) {
-                camera->updateFromJson(cameraData);
+                QJsonObject controls = cameraData["controls"].toObject();
+                camera->updateControls(controls.toVariantMap());
             }
         }
     } else {
