@@ -11,8 +11,8 @@ void Camera::parseJsonData(const QJsonObject& data)
 {
     m_id = data["id"].toString();
     qInfo() << m_id;
-    m_name = data["name"].toString();
-    qInfo() << m_name;
+    m_path = data["path"].toString();
+    qInfo() << m_path;
 
     // Parse controls
     QJsonObject controlsObj = data["controls"].toObject();
@@ -31,11 +31,11 @@ void Camera::parseJsonData(const QJsonObject& data)
 
         for (auto resIt = resolutions.begin(); resIt != resolutions.end(); ++resIt) {
             resolutionMap[resIt.key()] = resIt.value().toVariant();
-            qInfo() << resIt.key() << " : " << resIt.value();
         }
 
         m_formats[formatIt.key()] = resolutionMap;
     }
+    qInfo() << m_formats;
 }
 
 void Camera::updateControls(const QVariantMap& controls)

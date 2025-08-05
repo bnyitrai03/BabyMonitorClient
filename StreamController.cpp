@@ -8,23 +8,21 @@ StreamController::StreamController(QObject *parent) : QObject(parent)
 {
 }
 
-void StreamController::startStream(const QString& cameraId, const QString& cameraPath, int fps, int width, int height)
+void StreamController::startStream(const QString& cameraId, const QString& path, const QString& eye, int fps, int width, int height)
 {
     QJsonObject requestData;
-    requestData["cam"] = cameraId;
-    requestData["cam_path"] = cameraPath;
+    requestData["cam"] = formatCamID(cameraId, eye);
+    requestData["cam_path"] = path;
     requestData["fps"] = fps;
     requestData["width"] = width;
     requestData["height"] = height;
 
     QJsonDocument doc(requestData);
+    qInfo() << doc;
     QByteArray data = doc.toJson();
 
     QNetworkReply* reply = ApiClient::instance()->post("/stream/config/start", data);
     connect(reply, &QNetworkReply::finished, this, &StreamController::onStreamStarted);
-
-    // Optimistically set the current camera ID
-    setCurrentCameraId(cameraId);
 }
 
 void StreamController::stopStream()
@@ -46,8 +44,6 @@ void StreamController::onStreamStarted()
         setStreaming(true);
     } else {
         emit error("Failed to start stream: " + reply->errorString());
-        // If starting failed, reset the state
-        setCurrentCameraId("");
         setStreaming(false);
     }
     reply->deleteLater();
@@ -61,7 +57,6 @@ void StreamController::onStreamStopped()
     if (reply->error() == QNetworkReply::NoError) {
         setStreamUrl(QUrl());
         setStreaming(false);
-        setCurrentCameraId("");
     } else {
         emit error("Failed to stop stream: " + reply->errorString());
     }
@@ -84,10 +79,18 @@ void StreamController::setStreaming(bool streaming)
     }
 }
 
-void StreamController::setCurrentCameraId(const QString& cameraId)
+QString StreamController::formatCamID(const QString& id, const QString& eye)
 {
-    if (m_currentCameraId != cameraId) {
-        m_currentCameraId = cameraId;
-        emit currentCameraIdChanged();
+    if (id == "cam1"){
+        if (eye == "Left")
+            return "caml1";
+        else
+            return "camr1";
+    }
+    else{
+        if (eye == "Left")
+            return "caml2";
+        else
+            return "camr2";
     }
 }

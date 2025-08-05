@@ -23,10 +23,8 @@ public:
     Q_INVOKABLE void updateCameraControl(const QString& cameraId, const QString& controlName, const QVariant& value);
     Q_INVOKABLE void resetCameraControls(const QString& cameraId);
 
-    // Helper functions for QML, moved from the old controller
-    Q_INVOKABLE QStringList getFormatsForCamera(const QString& cameraId);
-    Q_INVOKABLE QStringList getResolutionsForFormat(const QString& cameraId, const QString& format);
-    Q_INVOKABLE QList<int> getFpsForResolution(const QString& cameraId, const QString& format, const QString& resolution);
+    Q_INVOKABLE QStringList getResolutions(const QString& cameraId);
+    Q_INVOKABLE QList<int> getFpsForResolution(const QString& cameraId, const QString& resolution);
 signals:
     void camerasChanged();
     void activeCameraChanged();

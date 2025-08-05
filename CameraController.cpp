@@ -127,42 +127,49 @@ Camera* CameraController::findCameraById(const QString& cameraId)
 }
 
 //--- Helper function implementations  ---
-
-QStringList CameraController::getFormatsForCamera(const QString& cameraId)
+QStringList CameraController::getResolutions(const QString& cameraId)
 {
     Camera* camera = findCameraById(cameraId);
-    return camera ? camera->formats().keys() : QStringList();
-}
-
-QStringList CameraController::getResolutionsForFormat(const QString& cameraId, const QString& format)
-{
-    Camera* camera = findCameraById(cameraId);
-    if (camera) {
-        QVariantMap formats = camera->formats();
-        if (formats.contains(format)) {
-            return formats[format].toMap().keys();
-        }
+    if (!camera) {
+        return QStringList();
     }
+
+    QVariantMap formats = camera->formats();
+    if (formats.contains("MJPEG")) {
+        QVariantMap mjpeg = formats["MJPEG"].toMap();
+        QStringList mjpeg_keys(mjpeg.keys());
+        std::sort(mjpeg_keys.begin(), mjpeg_keys.end(), [](const QString& a, const QString& b) {
+            return a.split('x')[0].toInt() > b.split('x')[0].toInt();
+        });
+        return mjpeg_keys;
+    }
+
     return QStringList();
 }
 
-QList<int> CameraController::getFpsForResolution(const QString& cameraId, const QString& format, const QString& resolution)
+QList<int> CameraController::getFpsForResolution(const QString& cameraId, const QString& resolution)
 {
     Camera* camera = findCameraById(cameraId);
-    if (camera) {
-        QVariantMap formats = camera->formats();
-        if (formats.contains(format)) {
-            QVariantMap resolutions = formats[format].toMap();
-            if (resolutions.contains(resolution)) {
-                QVariantList fpsList = resolutions[resolution].toList();
-                QList<int> result;
-                for (const QVariant& fps : std::as_const(fpsList)) {
-                    result.append(fps.toInt());
-                }
-                return result;
+    if (!camera || resolution.isEmpty()) {
+        return QList<int>();
+    }
+
+    QVariantMap formats = camera->formats();
+    if (formats.contains("MJPEG")) {
+        QVariantMap mjpeg = formats["MJPEG"].toMap();
+        if (mjpeg.contains(resolution)) {
+            QVariantList fpsVariantList = mjpeg[resolution].toList();
+            QList<int> fpsList;
+            for (const QVariant& fps : std::as_const(fpsVariantList)) {
+                fpsList.append(fps.toInt());
             }
+            std::sort(fpsList.begin(), fpsList.end(), [](const auto& a, const auto& b) {
+                return a > b;
+            });
+            return fpsList;
         }
     }
+
     return QList<int>();
 }
 

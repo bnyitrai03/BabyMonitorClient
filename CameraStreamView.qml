@@ -8,8 +8,7 @@ Rectangle {
     id: root
     color: "#f0f0f0"
 
-    property bool isReadyToStream: cameraComboBox.currentIndex > -1 &&
-                                  formatComboBox.currentIndex > -1 &&
+    property bool readyToStream: cameraComboBox.currentIndex > -1 &&
                                   resolutionComboBox.currentIndex > -1 &&
                                   fpsComboBox.currentIndex > -1
 
@@ -95,6 +94,8 @@ Rectangle {
                                 if(currentIndex > -1){
                                     cameraController.setActiveCamera(cameraController.cameras[currentIndex])
                                     console.log("Updated activeCamera to:", cameraController.activeCamera.id)
+                                    resolutionComboBox.model = cameraController.getResolutions(cameraController.activeCamera.id)
+                                    fpsComboBox.model = cameraController.getFpsForResolution(cameraController.activeCamera.id, resolutionComboBox.currentText)
                                 }
                             }
                         }
@@ -355,30 +356,36 @@ Rectangle {
                         rowSpacing: 5
 
                         Label { text: "Camera eye:" }
-                        Label {
-                            text: cameraComboBox.currentIndex > -1 ? cameraComboBox.currentText : "No camera selected"
+                        ComboBox {
+                            id: cameraeyeComboBox
                             Layout.fillWidth: true
-                            elide: Text.ElideRight
-                            font.italic: cameraComboBox.currentIndex === -1
+                            enabled: !streamController.streaming
+                            textRole: "text"
+                            model: [
+                                { value: qsTr("Left"), text: qsTr("Left") },
+                                { value: qsTr("Right"), text: qsTr("Right") }
+                            ]
                         }
 
                         Label { text: "Resolution:" }
                         ComboBox {
                             id: resolutionComboBox
                             Layout.fillWidth: true
-                            // enabled: formatComboBox.currentIndex > -1 && !StreamController.streaming
-                            // onCurrentTextChanged: {
-                            //     fpsComboBox.model = [];
-                            //     if (currentText && formatComboBox.currentText && cameraComboBox.currentIndex > -1) {
-                            //         fpsComboBox.model = CameraController.getFpsForResolution(cameraComboBox.currentValue, formatComboBox.currentText, currentText);
-                            //     }
-                            // }
+                            enabled: !streamController.streaming
+                            model:[]
+                            onCurrentIndexChanged: {
+                                fpsComboBox.model = []
+                                if (currentIndex > -1 && cameraController.activeCamera !== null)
+                                    fpsComboBox.model = cameraController.getFpsForResolution(cameraController.activeCamera.id, currentText)
+                            }
                         }
+
                         Label { text: "FPS:" }
                         ComboBox {
                             id: fpsComboBox
                             Layout.fillWidth: true
-                            //enabled: resolutionComboBox.currentIndex > -1 && !StreamController.streaming
+                            enabled: !streamController.streaming
+                            model:[]
                         }
                     }
 
@@ -390,51 +397,49 @@ Rectangle {
 
                         Button {
                             text: "Start Stream"
-                            // enabled: isReadyToStream && !StreamController.streaming
-                            // onClicked: {
-                            //     const resolutionParts = resolutionComboBox.currentText.split('x');
-                            //     StreamController.startStream(
-                            //         cameraComboBox.currentValue,
-                            //         cameraController.activeCamera.id,
-                            //         parseInt(fpsComboBox.currentText),
-                            //         parseInt(resolutionParts[0]),
-                            //         parseInt(resolutionParts[1])
-                            //     );
-                            // }
+                            enabled: !streamController.streaming && readyToStream
+                            onClicked: {
+                                const resolutionParts = resolutionComboBox.currentText.split('x');
+                                streamController.startStream(
+                                    cameraController.activeCamera.id,
+                                    cameraController.activeCamera.path,
+                                    cameraeyeComboBox.currentText,
+                                    parseInt(fpsComboBox.currentText),
+                                    parseInt(resolutionParts[0]),
+                                    parseInt(resolutionParts[1])
+                                );
+                            }
                         }
 
                         Button {
                             text: "Stop Stream"
-                            // enabled: StreamController.streaming
-                            // onClicked: StreamController.stopStream()
+                            enabled: streamController.streaming
+                            onClicked: streamController.stopStream()
                         }
                     }
                 }
             }
         }
 
-        // --- Right Panel: Video Display ---
         Frame {
             Layout.fillWidth: true
             Layout.fillHeight: true
+
             StackLayout {
                 anchors.fill: parent
-                //currentIndex: StreamController.streaming && StreamController.streamUrl.toString() !== "" ? 1 : 0
+                currentIndex: streamController.streaming && streamController.streamUrl.toString() !== "" ? 1 : 0
+
+                // --- Not streaming / connecting ---
                 Rectangle {
                     color: "black"
                     Label {
                         anchors.centerIn: parent
                         color: "white"
-                        //text: StreamController.streaming ? "Connecting..." : "Stream not active."
+                        text: streamController.streaming ? "Connecting..." : "Stream not active."
                         horizontalAlignment: Text.AlignHCenter
                     }
                 }
-                Video {
-                    id: videoPlayer
-                    //source: StreamController.streamUrl
-                    autoPlay: true
-                    fillMode: VideoOutput.PreserveAspectFit
-                }
+
             }
         }
     }
@@ -447,13 +452,13 @@ Rectangle {
             errorDialog.open()
         }
     }
-    // Connections {
-    //     target: StreamController
-    //     function onError(message) {
-    //         errorDialog.text = "Stream Error: " + message
-    //         errorDialog.open()
-    //     }
-    // }
+    Connections {
+        target: streamController
+        function onError(message) {
+            errorDialog.text = "Stream Error: " + message
+            errorDialog.open()
+        }
+    }
     Dialog {
         id: errorDialog
         title: "Error"

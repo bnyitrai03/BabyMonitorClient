@@ -10,7 +10,7 @@ class Camera : public QObject
 {
     Q_OBJECT
     Q_PROPERTY(QString id READ id CONSTANT)
-    Q_PROPERTY(QString name READ name CONSTANT)
+    Q_PROPERTY(QString path READ path CONSTANT)
     Q_PROPERTY(QVariantMap controls READ controls NOTIFY controlsChanged)
     Q_PROPERTY(QVariantMap formats READ formats CONSTANT)
 
@@ -19,7 +19,7 @@ public:
     Camera(const QJsonObject& data, QObject *parent = nullptr);
 
     QString id() const { return m_id; }
-    QString name() const { return m_name; }
+    QString path() const { return m_path; }
     QVariantMap controls() const { return m_controls; }
     QVariantMap formats() const { return m_formats; }
 
@@ -31,7 +31,7 @@ signals:
 
 private:
     QString m_id;
-    QString m_name;
+    QString m_path;
     QVariantMap m_controls;
     QVariantMap m_formats;
 
