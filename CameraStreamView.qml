@@ -1,7 +1,6 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
-import QtMultimedia
 import QtWebEngine
 import BabyMonitor 1.0
 
@@ -42,7 +41,7 @@ Rectangle {
                     ComboBox {
                         id: deviceSelector
                         Layout.fillWidth: true
-                        model: ["BabyMonitor1", "rpicm5"]
+                        model: ["ncwl-a01-e03-1", "rpicm5"]
                         // Start with no item selected
                         currentIndex: -1
                         displayText: currentIndex > -1 ? currentText : "Please select a device..."
@@ -445,16 +444,17 @@ Rectangle {
                     id: streamView
                     anchors.fill: parent
                     url: streamController.streamUrl
-                    settings {
-                            accelerated2dCanvasEnabled: true
-                            webGLEnabled: true
 
-                            javascriptEnabled: false
-                            pluginsEnabled: false
-                            autoLoadImages: true
-                            touchIconsEnabled: false
-                            focusOnNavigationEnabled: false
-                        }
+                    settings {
+                        accelerated2dCanvasEnabled: true
+                        webGLEnabled: true
+
+                        javascriptEnabled: false
+                        pluginsEnabled: false
+                        autoLoadImages: true
+                        touchIconsEnabled: false
+                        focusOnNavigationEnabled: false
+                    }
 
                     onCertificateError: function(error) {
                                            console.log("Certificate error:", error.description)

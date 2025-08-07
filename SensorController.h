@@ -4,6 +4,9 @@
 #include <QObject>
 #include <QString>
 #include <QTimer>
+#include <QFile>
+#include <QTextStream>
+#include <QDir>
 
 class SensorController : public QObject
 {
@@ -33,6 +36,7 @@ signals:
 
 private:
     void parseSensorData(const QByteArray& data);
+    void saveToCsv();
 
     double m_luxValue = 0.0;
     double m_tempValue = 0.0;
@@ -40,6 +44,7 @@ private:
     QString m_timestamp;
     QTimer m_refreshTimer;
     bool m_online = false;
+    QString m_csvFilePath = QDir::currentPath() + "/sensor_log.csv";
 };
 
 #endif // SENSORCONTROLLER_H

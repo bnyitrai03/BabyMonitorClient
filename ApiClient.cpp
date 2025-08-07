@@ -17,7 +17,7 @@ ApiClient::ApiClient(QObject *parent) : QObject(parent)
 
 void ApiClient::setUrlandCert(const QString& name)
 {
-    //eg.: https://babymonitor1
+    //eg.: https://ncwl-a01-e03-1
     m_baseUrl = QString("https://%1").arg(name.toLower());
 
     QString certPem = name.contains("1") ? DEVICE1_CERT : DEVICE2_CERT;

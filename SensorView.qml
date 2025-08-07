@@ -1,9 +1,11 @@
-// SensorView.qml
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 
 Item {
+    property real hysteresis: 10
+    property bool lampIsOn: false
+
     ScrollView {
         anchors.fill: parent
         anchors.margins: 20
@@ -72,7 +74,7 @@ Item {
                     Layout.fillWidth: true
                     Layout.alignment: Qt.AlignHCenter
                     Layout.maximumWidth: 400
-                    height: 120
+                    height: 140
                     color: "#f8f9fa"
                     border.color: "#dee2e6"
                     border.width: 1
@@ -169,12 +171,9 @@ Item {
                                 width: 40
                                 height: 40
                                 radius: 20
-                                color: lampShouldBeOn ? "#f39c12" : "#95a5a6"
+                                color: sensorController.online && lampIsOn ? "#f39c12" : "#95a5a6"
                                 border.color: Qt.darker(color, 1.3)
                                 border.width: 2
-
-                                property bool lampShouldBeOn: sensorController.online &&
-                                                            sensorController.luxValue < sensorController.luxThreshold
 
                                 // Lamp bulb icon
                                 Rectangle {
@@ -182,8 +181,8 @@ Item {
                                     width: 20
                                     height: 20
                                     radius: 10
-                                    color: parent.lampShouldBeOn ? "#fff" : "#7f8c8d"
-                                    border.color: parent.lampShouldBeOn ? "#e67e22" : "#95a5a6"
+                                    color: lampIsOn ? "#fff" : "#7f8c8d"
+                                    border.color: lampIsOn ? "#e67e22" : "#95a5a6"
                                     border.width: 1
 
                                     // Lamp filament lines
@@ -196,7 +195,7 @@ Item {
                                             Rectangle {
                                                 width: 8
                                                 height: 1
-                                                color: parent.parent.parent.lampShouldBeOn ? "#e67e22" : "#7f8c8d"
+                                                color: lampIsOn ? "#e67e22" : "#7f8c8d"
                                                 anchors.horizontalCenter: parent.horizontalCenter
                                             }
                                         }
@@ -212,7 +211,7 @@ Item {
                                     color: "transparent"
                                     border.color: "#f39c12"
                                     border.width: 2
-                                    opacity: parent.lampShouldBeOn ? 0.3 : 0
+                                    opacity: lampIsOn ? 0.3 : 0
                                     visible: opacity > 0
 
                                     Behavior on opacity {
@@ -236,14 +235,14 @@ Item {
                                     text: {
                                         if (!sensorController.online) return "Offline"
                                         if (sensorController.luxThreshold < 0) return "No Threshold"
-                                        return sensorController.luxValue < sensorController.luxThreshold ? "ON" : "OFF"
+                                        return lampIsOn ? "ON" : "OFF"
                                     }
                                     font.pixelSize: 16
                                     font.bold: true
                                     color: {
                                         if (!sensorController.online) return "gray"
                                         if (sensorController.luxThreshold < 0) return "#e67e22"
-                                        return sensorController.luxValue < sensorController.luxThreshold ? "#27ae60" : "#c0392b"
+                                        return lampIsOn ? "#27ae60" : "#c0392b"
                                     }
                                 }
                             }
@@ -258,6 +257,29 @@ Item {
                     font.italic: true
                     Layout.alignment: Qt.AlignHCenter
                     Layout.topMargin: 10
+                }
+            }
+        }
+    }
+
+    // Hysteresis implementation, update lampIsOn based on sensor data
+    Connections {
+        target: sensorController
+
+        function onSensorDataChanged() {
+            if (!sensorController.online || sensorController.luxThreshold < 0)
+                return
+
+            const lux = sensorController.luxValue
+            const threshold = sensorController.luxThreshold
+
+            if (lampIsOn) {
+                if (lux > threshold + hysteresis) {
+                    lampIsOn = false
+                }
+            } else {
+                if (lux < threshold) {
+                    lampIsOn = true
                 }
             }
         }

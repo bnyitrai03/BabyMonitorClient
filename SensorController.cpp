@@ -7,7 +7,7 @@
 SensorController::SensorController(QObject *parent) : QObject(parent)
 {
     connect(&m_refreshTimer, &QTimer::timeout, this, &SensorController::refreshData);
-    m_refreshTimer.start(1000); // Refresh every second
+    m_refreshTimer.start(1000);
     refreshData();
 }
 
@@ -57,9 +57,30 @@ void SensorController::parseSensorData(const QByteArray &data)
         m_luxThreshold = obj["lux_threshold"].toInt();
         m_timestamp = obj["timestamp"].toString();
         m_online = true;
+
+        saveToCsv();
     }
 
     emit sensorDataChanged();
+}
+
+void SensorController::saveToCsv()
+{
+    if (m_csvFilePath.isEmpty()) {
+        qWarning("No sensor data filepath!");
+        return;
+    }
+
+    QFile file(m_csvFilePath);
+    if (file.open(QIODevice::WriteOnly | QIODevice::Append)) {
+        QTextStream stream(&file);
+
+        stream << m_timestamp << ","
+               << m_luxValue << ","
+               << m_tempValue << "\n";
+
+        file.close();
+    }
 }
 
 double SensorController::get_luxValue() const { return m_luxValue; }
