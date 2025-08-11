@@ -35,7 +35,26 @@ void SensorController::updateLuxThreshold(int threshold)
     QNetworkReply* reply = ApiClient::instance()->put("/sensors/lux_threshold", jsonData);
     connect(reply, &QNetworkReply::finished, this, [this, reply]() {
         if (reply->error() == QNetworkReply::NoError) {
-            refreshData();
+            qInfo() << reply->readAll();
+        } else {
+            m_online = false;
+            emit sensorDataChanged();
+        }
+        reply->deleteLater();
+    });
+}
+
+void SensorController::updateLedBrightness(double brightness)
+{
+    QJsonObject jsonObj;
+    jsonObj["brightness"] = brightness;
+    QJsonDocument jsonDoc(jsonObj);
+    QByteArray jsonData = jsonDoc.toJson(QJsonDocument::Compact);
+
+    QNetworkReply* reply = ApiClient::instance()->put("/sensors/led_brightness", jsonData);
+    connect(reply, &QNetworkReply::finished, this, [this, reply]() {
+        if (reply->error() == QNetworkReply::NoError) {
+            qInfo() << reply->readAll();
         } else {
             m_online = false;
             emit sensorDataChanged();
@@ -55,6 +74,7 @@ void SensorController::parseSensorData(const QByteArray &data)
         m_luxValue = obj["lux_value"].toDouble();
         m_tempValue = obj["temp_value"].toDouble();
         m_luxThreshold = obj["lux_threshold"].toInt();
+        m_ledBrightness = obj["led_brightness"].toDouble();
         m_timestamp = obj["timestamp"].toString();
         m_online = true;
 
@@ -74,11 +94,9 @@ void SensorController::saveToCsv()
     QFile file(m_csvFilePath);
     if (file.open(QIODevice::WriteOnly | QIODevice::Append)) {
         QTextStream stream(&file);
-
         stream << m_timestamp << ","
                << m_luxValue << ","
                << m_tempValue << "\n";
-
         file.close();
     }
 }
@@ -86,6 +104,6 @@ void SensorController::saveToCsv()
 double SensorController::get_luxValue() const { return m_luxValue; }
 double SensorController::get_tempValue() const { return m_tempValue; }
 int SensorController::get_luxThreshold() const { return m_luxThreshold; }
-void SensorController::set_luxThreshold(int threshold){m_luxThreshold = threshold; }
+double SensorController::get_ledBrightness() const{ return m_ledBrightness; }
 QString SensorController::get_timestamp() const { return m_timestamp; }
 bool SensorController::get_online() const { return m_online; }

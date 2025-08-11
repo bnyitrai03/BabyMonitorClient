@@ -11,8 +11,17 @@
 
 int main(int argc, char *argv[])
 {
-    qputenv("QTWEBENGINE_CHROMIUM_FLAGS",
-            "--enable-gpu-rasterization ");
+    QByteArray chromiumFlags =
+        // GPU acceleration and rendering
+        "--enable-gpu-rasterization"
+        "--enable-zero-copy"
+        "--enable-oop-rasterization"
+        // Video/Media optimization
+        "--enable-accelerated-video-decode"
+        "--enable-accelerated-mjpeg-decode"
+        "--disable-background-media-suspend";
+
+    qputenv("QTWEBENGINE_CHROMIUM_FLAGS", chromiumFlags);
 
     QCoreApplication::setAttribute(Qt::AA_ShareOpenGLContexts);
     QtWebEngineQuick::initialize();

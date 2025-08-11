@@ -74,7 +74,7 @@ Item {
                     Layout.fillWidth: true
                     Layout.alignment: Qt.AlignHCenter
                     Layout.maximumWidth: 400
-                    height: 140
+                    height: 220
                     color: "#f8f9fa"
                     border.color: "#dee2e6"
                     border.width: 1
@@ -156,6 +156,35 @@ Item {
                                         if (!isNaN(newThreshold) && newThreshold > 0) {
                                             sensorController.updateLuxThreshold(newThreshold)
                                         }
+                                    }
+                                }
+                            }
+                        }
+
+                        // LED Brightness Control
+                        RowLayout {
+                            Layout.fillWidth: true
+                            Layout.alignment: Qt.AlignHCenter
+                            spacing: 15
+
+                            Label {
+                                text: "LED Brightness:"
+                                font.bold: true
+                                font.pixelSize: 16
+                                color: "#34495e"
+                            }
+
+                            CustomSlider {
+                                id: brightnessSlider
+                                from: 0
+                                to: 1
+                                stepSize: 0.05
+                                enabled: sensorController.online
+                                //value: sensorController.online ? sensorController.ledBrightness : 0
+
+                                onPressedChanged: {
+                                    if (!pressed && sensorController.online) {
+                                        sensorController.updateLedBrightness(value)
                                     }
                                 }
                             }

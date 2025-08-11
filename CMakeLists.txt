@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.16)
 
 project(BabyMonitor VERSION 1.0 LANGUAGES CXX)
 
-find_package(Qt6 REQUIRED COMPONENTS Quick Gui Network QuickControls2 WebEngineQuick)
+find_package(Qt6 REQUIRED COMPONENTS Quick Gui Network QuickControls2 QuickDialogs2 WebEngineQuick)
 
 qt_standard_project_setup(REQUIRES 6.8)
 set(CMAKE_CXX_STANDARD 17)
@@ -37,6 +37,7 @@ target_link_libraries(BabyMonitorUI
         Qt6::Quick
         Qt6::Network
         Qt6::QuickControls2
+        Qt6::QuickDialogs2
         Qt6::WebEngineQuick
 )
 

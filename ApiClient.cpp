@@ -4,6 +4,8 @@
 #include <QSslCertificate>
 #include <QNetworkReply>
 #include <QSslSocket>
+#include <QDir>
+#include <QFile>
 
 ApiClient* ApiClient::instance()
 {
@@ -19,9 +21,25 @@ void ApiClient::setUrlandCert(const QString& name)
 {
     //eg.: https://ncwl-a01-e03-1
     m_baseUrl = QString("https://%1").arg(name.toLower());
+    QString certFileName = name.toLower() + ".crt";
+    QString certFilePath = QDir::currentPath() + "/" + certFileName;
 
-    QString certPem = name.contains("1") ? DEVICE1_CERT : DEVICE2_CERT;
-    QSslCertificate cert(certPem.toUtf8(), QSsl::Pem);
+    // Load certificate from file
+    QFile certFile(certFilePath);
+    if (!certFile.open(QIODevice::ReadOnly)) {
+        emit error("Failed to open certificate file: " + certFile.errorString());
+        return;
+    }
+
+    QByteArray certData = certFile.readAll();
+    certFile.close();
+    if (certData.isEmpty()) {
+        emit error("Certificate file is empty: " + certFilePath);
+        return;
+    }
+
+    // Create SSL certificate from file data
+    QSslCertificate cert(certData, QSsl::Pem);
     m_sslConfig = QSslConfiguration::defaultConfiguration();
     QList<QSslCertificate> caCerts = m_sslConfig.caCertificates();
     caCerts.append(cert);
@@ -29,9 +47,8 @@ void ApiClient::setUrlandCert(const QString& name)
 
     connect(&m_networkManager, &QNetworkAccessManager::sslErrors,
             [](QNetworkReply* reply, const QList<QSslError>& errors) {
-                qWarning() << "SSL Errors:";
                 for (const auto& e : errors)
-                    qWarning() << " -" << e.errorString();
+                    qWarning() << ("SSL Error: " + e.errorString());
             });
 
     qInfo("ApiClient has connected!");

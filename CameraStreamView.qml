@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import QtQuick.Dialogs
 import QtWebEngine
 import BabyMonitor 1.0
 
@@ -471,22 +472,30 @@ Rectangle {
     Connections {
         target: cameraController
         function onError(message) {
-            errorDialog.text = "Camera Error: " + message
+            errorDialog.title = "Camera Error"
+            errorDialog.text = message
             errorDialog.open()
         }
     }
     Connections {
         target: streamController
         function onError(message) {
-            errorDialog.text = "Stream Error: " + message
+            errorDialog.title = "Stream Error"
+            errorDialog.text = message
             errorDialog.open()
         }
     }
-    Dialog {
+    Connections {
+        target: ApiClient
+        function onError(message) {
+            errorDialog.title = "Connection Error"
+            errorDialog.text = message
+            errorDialog.open()
+        }
+    }
+    MessageDialog {
         id: errorDialog
-        title: "Error"
-        standardButtons: Dialog.Ok
-        modal: true
-        Text { text: parent.text }
+        buttons: Dialog.Ok
+        text: parent.text
     }
 }

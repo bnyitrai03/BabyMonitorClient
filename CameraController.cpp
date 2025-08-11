@@ -7,7 +7,7 @@
 
 CameraController::CameraController(QObject *parent) : QObject(parent)
 {
-    refreshCameras();
+
 }
 
 QQmlListProperty<Camera> CameraController::cameras()
@@ -55,7 +55,7 @@ void CameraController::resetCameraControls(const QString& cameraId)
 void CameraController::onCamerasReceived()
 {
     QNetworkReply* reply = qobject_cast<QNetworkReply*>(sender());
-    if (!reply){
+    if (reply == nullptr){
         emit error("Did not receive reply from server");
         return;
     }
@@ -71,7 +71,7 @@ void CameraController::onCamerasReceived()
 void CameraController::onControlsUpdated()
 {
     QNetworkReply* reply = qobject_cast<QNetworkReply*>(sender());
-    if (!reply){
+    if (reply == nullptr){
         emit error("Invalid camera controls reply!");
         return;
     }
@@ -130,7 +130,7 @@ Camera* CameraController::findCameraById(const QString& cameraId)
 QStringList CameraController::getResolutions(const QString& cameraId)
 {
     Camera* camera = findCameraById(cameraId);
-    if (!camera) {
+    if (camera == nullptr) {
         return QStringList();
     }
 
@@ -150,7 +150,7 @@ QStringList CameraController::getResolutions(const QString& cameraId)
 QList<int> CameraController::getFpsForResolution(const QString& cameraId, const QString& resolution)
 {
     Camera* camera = findCameraById(cameraId);
-    if (!camera || resolution.isEmpty()) {
+    if (camera == nullptr || resolution.isEmpty()) {
         return QList<int>();
     }
 
