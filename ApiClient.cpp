@@ -23,6 +23,7 @@ void ApiClient::setUrlandCert(const QString& name)
     m_baseUrl = QString("https://%1").arg(name.toLower());
     QString certFileName = name.toLower() + ".crt";
     QString certFilePath = QDir::currentPath() + "/" + certFileName;
+    qInfo() << certFilePath;
 
     // Load certificate from file
     QFile certFile(certFilePath);
