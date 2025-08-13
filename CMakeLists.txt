@@ -18,6 +18,8 @@ qt_add_qml_module(BabyMonitorUI
         SensorView.qml
         CameraStreamView.qml
         CustomSlider.qml
+        CameraControls.qml
+        StreamView.qml
     SOURCES
         ApiClient.h
         ApiClient.cpp

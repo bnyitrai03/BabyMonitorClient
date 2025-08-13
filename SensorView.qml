@@ -180,7 +180,6 @@ Item {
                                 to: 1
                                 stepSize: 0.05
                                 enabled: sensorController.online
-                                //value: sensorController.online ? sensorController.ledBrightness : 0
 
                                 onPressedChanged: {
                                     if (!pressed && sensorController.online) {
