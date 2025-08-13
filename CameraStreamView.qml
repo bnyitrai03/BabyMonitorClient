@@ -43,7 +43,7 @@ Rectangle {
                     ComboBox {
                         id: deviceSelector
                         Layout.fillWidth: true
-                        model: ["ncwl-a01-e03-1", "rpicm5"]
+                        model: ["ncwl-a01-e03-1", "ncwl-a01-e03-2"]
                         // Start with no item selected
                         currentIndex: -1
                         displayText: currentIndex > -1 ? currentText : "Please select a device..."

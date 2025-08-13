@@ -1,0 +1,4 @@
+Desktop app Windows release: 
+1. Build in release mode
+2. Open Qt6.9.1(MSVC 2022 64-bit) terminal
+3. Run: windeployqt --release --qmldir C:\Users\Asus\Desktop\RPICM5_Baby_Monitor\BabyMonitorClient\BabyMonitor C:\Users\Asus\Desktop\RPICM5_Baby_Monitor\BabyMonitorClient\BabyMonitor\build\Desktop_Qt_6_9_1_MSVC2022_64bit-Release\BabyMonitorUI.exe
